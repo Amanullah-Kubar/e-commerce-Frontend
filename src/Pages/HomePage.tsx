@@ -26,12 +26,12 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
     try {
       // 1️⃣ Fetch product list
       if (searchQuery === '') {
-        const response = await axios.get<Product[]>('http://localhost:8080/api/products');
+        const response = await axios.get<Product[]>('https://e-commerceapp-production-1342.up.railway.app/api/products');
         productsData = response.data;
 
       } else {
         const response = await axios.get<Product[]>(
-          `http://localhost:8080/api/products/search?query=${searchQuery}`
+          `https://e-commerceapp-production-1342.up.railway.app/api/products/search?query=${searchQuery}`
         );
         productsData = response.data;
       }

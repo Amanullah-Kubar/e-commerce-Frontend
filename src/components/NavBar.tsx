@@ -8,11 +8,8 @@ type NavBarProps = {
 };
 function NavBar({ searchQuery, setSearchQuery } : NavBarProps) {
   const handleSearch = () => {
-    // Implement search functionality here
-    console.log("Searching for:", searchQuery);
   }
   useEffect(() => {
-    console.log("Search query updated:", searchQuery);
   }, [searchQuery]);
   return (
     <nav className="bg-gray-900 text-gray-100 px-6 py-4 shadow-lg sticky top-0 z-50">

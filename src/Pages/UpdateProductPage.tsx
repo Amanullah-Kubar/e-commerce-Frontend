@@ -94,7 +94,7 @@ export default function UpdateProductPage() {
             formData.append("product", new Blob([JSON.stringify(productData)], { type: "application/json" }));
             if (imageFile) formData.append("imageFile", imageFile);
 
-            await axios.put(`http://localhost:8080/api/product/${id}`, formData, {
+            await axios.put(`https://e-commerceapp-production-1342.up.railway.app/api/product/${id}`, formData, {
                 headers: { "Content-Type": "multipart/form-data" },
             });
 

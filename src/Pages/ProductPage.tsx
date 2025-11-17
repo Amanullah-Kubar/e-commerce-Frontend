@@ -26,11 +26,11 @@ function ProductPage() {
     const fetchProductWithImage = async () => {
       try {
         // 1️⃣ Fetch product details
-        const productResponse = await axios.get<Product>(`http://localhost:8080/api/products/${id}`);
+        const productResponse = await axios.get<Product>(`https://e-commerceapp-production-1342.up.railway.app/api/products/${id}`);
         const productData = productResponse.data;
 
         // 2️⃣ Fetch image as blob
-        const imageResponse = await axios.get(`http://localhost:8080/api/product/${id}/image`, {
+        const imageResponse = await axios.get(`https://e-commerceapp-production-1342.up.railway.app/api/product/${id}/image`, {
           responseType: "blob",
         });
 
@@ -54,7 +54,7 @@ function ProductPage() {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/api/product/${id}`, {
+      const response = await fetch(`https://e-commerceapp-production-1342.up.railway.app/api/product/${id}`, {
         method: "DELETE",
       });
 

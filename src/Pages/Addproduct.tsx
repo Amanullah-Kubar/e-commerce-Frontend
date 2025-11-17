@@ -84,7 +84,8 @@ function AddProduct() {
       // Append image separately as 'image' part
       if (imageFile) formData.append("imageFile", imageFile);
 
-      await axios.post("http://localhost:8080/api/product", formData, {
+      await axios.post("https://e-commerceapp-production-1342.up.railway.app/api/product", formData, {
+
         headers: {
           "Content-Type": "multipart/form-data",
         },
