@@ -1,4 +1,3 @@
-import { ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -66,9 +65,6 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
 
   return (
     <div className="bg-gray-900 min-h-screen p-8 text-gray-100">
-      <h1 className="text-4xl font-bold text-center text-indigo-400 mb-8">
-        Welcome to Our Store
-      </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (
