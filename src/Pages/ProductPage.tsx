@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { ShoppingCart } from "lucide-react";
 
 interface Product {
   id: number;
@@ -88,9 +87,6 @@ function ProductPage() {
 
   const date = new Date(product.releaseDate);
 
-  const handleAddToCart = () => {
-    throw new Error("Function not implemented.");
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-6 py-12">
@@ -132,13 +128,6 @@ function ProductPage() {
           </div>
 
           <div className="flex flex-col md:flex-row justify-center gap-4">
-            <button
-              onClick={handleAddToCart}
-              className="flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg"
-            >
-              🛒 Add to Cart
-              <ShoppingCart className="inline-block w-5 h-5 ml-2" />
-            </button>
 
             <button
               onClick={handleDelete}

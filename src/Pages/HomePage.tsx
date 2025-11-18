@@ -105,10 +105,7 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
               >
                 {product.availability ? 'In Stock' : 'Out of Stock'}
               </p>
-              <button className="mt-4 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded transition-colors flex items-center justify-center">
-                Add to Cart
-                <ShoppingCart className="inline-block w-5 h-5 ml-2" />
-              </button>
+
             </div>
           </div>
         ))}
