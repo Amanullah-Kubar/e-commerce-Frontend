@@ -42,7 +42,7 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
         productsData.map(async (product) => {
           try {
             const imageResponse = await axios.get(
-              `http://localhost:8080/api/product/${product.id}/image`,
+              `https://e-commerceapp-production-1342.up.railway.app/api/product/${product.id}/image`,
               { responseType: 'blob' }
             );
             const imageUrl = URL.createObjectURL(imageResponse.data);
