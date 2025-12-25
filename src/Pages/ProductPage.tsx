@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-
+import Modal from "../components/Modal";
 interface Product {
   id: number;
   name: string;
@@ -19,27 +19,58 @@ function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"loading"|"error"|"success"|"info">("info");
+  const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+  const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProductWithImage = async () => {
       try {
+        setModalOpen(false);
         // 1️⃣ Fetch product details
-        const productResponse = await axios.get<Product>(`https://e-commerceapp-production-1342.up.railway.app/api/products/${id}`);
+        const productResponse = await axios.get<Product>(`http://localhost:8080/api/products/${id}`);
         const productData = productResponse.data;
 
         // 2️⃣ Fetch image as blob
-        const imageResponse = await axios.get(`https://e-commerceapp-production-1342.up.railway.app/api/product/${id}/image`, {
-          responseType: "blob",
-        });
-
-        // Convert blob to URL for <img src>
-        const imageUrl = URL.createObjectURL(imageResponse.data);
-
-        // 3️⃣ Set product state with imageUrl
-        setProduct({ ...productData, imageUrl });
-      } catch (error) {
+        try {
+          const imageResponse = await axios.get(`http://localhost:8080/api/product/${id}/image`, {
+            responseType: "blob",
+          });
+          const imageUrl = URL.createObjectURL(imageResponse.data);
+          setProduct({ ...productData, imageUrl });
+        } catch (imgErr) {
+          console.warn("No image available or failed to fetch image", imgErr);
+          setProduct({ ...productData });
+        }
+      } catch (error: any) {
         console.error("Error fetching product or image:", error);
+        const status = error?.response?.status;
+        setModalType("error");
+        if (status) {
+          if (status === 404) {
+            setModalTitle("Not Found");
+            setModalMessage("Product not found.");
+            setModalType("info");
+          } else if (status === 401) {
+            setModalTitle("Unauthorized");
+            setModalMessage("Please log in to view this product.");
+          } else if (status === 403) {
+            setModalTitle("Forbidden");
+            setModalMessage("You don't have permission to view this product.");
+          } else if (status >= 500) {
+            setModalTitle("Server Error");
+            setModalMessage("Server is unavailable. Try again later.");
+          } else {
+            setModalTitle("Error");
+            setModalMessage(`Request failed with status ${status}.`);
+          }
+        } else {
+          setModalTitle("Network Error");
+          setModalMessage("Failed to contact server. Check your connection.");
+        }
+        setModalOpen(true);
       } finally {
         setLoading(false);
       }
@@ -53,19 +84,47 @@ function ProductPage() {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const response = await fetch(`https://e-commerceapp-production-1342.up.railway.app/api/product/${id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        alert("✅ Product deleted successfully");
-        navigate("/");
+      setModalOpen(false);
+      const response = await axios.delete(`http://localhost:8080/api/product/${id}`);
+      if (response && (response.status === 200 || response.status === 204)) {
+        setModalType("success");
+        setModalTitle("Deleted");
+        setModalMessage("Product deleted successfully.");
+        setModalOpen(true);
+        // navigate after a short moment so user sees the message
+        setTimeout(() => navigate("/"), 700);
       } else {
-        alert("❌ Failed to delete product");
+        setModalType("error");
+        setModalTitle("Delete Failed");
+        setModalMessage(`Failed to delete product (status ${response.status}).`);
+        setModalOpen(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting product:", error);
-      alert("❌ Error deleting product");
+      const status = error?.response?.status;
+      setModalType("error");
+      if (status) {
+        if (status === 401) {
+          setModalTitle("Unauthorized");
+          setModalMessage("You must be logged in to delete this product.");
+        } else if (status === 403) {
+          setModalTitle("Forbidden");
+          setModalMessage("You don't have permission to delete this product.");
+        } else if (status === 404) {
+          setModalTitle("Not Found");
+          setModalMessage("Product not found.");
+        } else if (status >= 500) {
+          setModalTitle("Server Error");
+          setModalMessage("Server error while deleting. Try again later.");
+        } else {
+          setModalTitle("Delete Error");
+          setModalMessage(`Request failed with status ${status}.`);
+        }
+      } else {
+        setModalTitle("Network Error");
+        setModalMessage("Unable to reach server. Check your connection.");
+      }
+      setModalOpen(true);
     }
   };
 
@@ -128,7 +187,6 @@ function ProductPage() {
           </div>
 
           <div className="flex flex-col md:flex-row justify-center gap-4">
-
             <button
               onClick={handleDelete}
               className="bg-red-600 hover:bg-red-500 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg"
@@ -138,7 +196,6 @@ function ProductPage() {
             <button onClick={() => navigate(`/product/update/${product.id}`)} className="bg-yellow-500 hover:bg-red-300 text-black font-semibold py-3 px-6 rounded-xl transition-all duration-300 shadow-lg">
               Update Product
             </button>
-
           </div>
         </div>
       </div>

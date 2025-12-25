@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Modal from '../components/Modal';
 
 interface Product {
   id: number;
@@ -19,18 +20,24 @@ interface Product {
 export default function HomePage({ searchQuery }: { searchQuery: string }) {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"loading"|"error"|"success"|"info">("info");
+  const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+  const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
 
   const fetchProducts = async () => {
     let productsData: Product[] = [];
+    setLoading(true);
     try {
       // 1️⃣ Fetch product list
       if (searchQuery === '') {
-        const response = await axios.get<Product[]>('https://e-commerceapp-production-1342.up.railway.app/api/products');
+        const response = await axios.get<Product[]>('http://localhost:8080/api/products');
         productsData = response.data;
 
       } else {
         const response = await axios.get<Product[]>(
-          `https://e-commerceapp-production-1342.up.railway.app/api/products/search?query=${searchQuery}`
+          `http://localhost:8080/api/products/search?query=${searchQuery}`
         );
         productsData = response.data;
       }
@@ -41,7 +48,7 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
         productsData.map(async (product) => {
           try {
             const imageResponse = await axios.get(
-              `https://e-commerceapp-production-1342.up.railway.app/api/product/${product.id}/image`,
+              `http://localhost:8080/api/product/${product.id}/image`,
               { responseType: 'blob' }
             );
             const imageUrl = URL.createObjectURL(imageResponse.data);
@@ -56,6 +63,33 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
       setProducts(productsWithImages);
     } catch (error) {
       console.error('Error fetching products:', error);
+      const status = (error as any)?.response?.status;
+      setModalType("error");
+      if (status) {
+        if (status === 401) {
+          setModalTitle("Unauthorized");
+          setModalMessage("Please log in to view products.");
+        } else if (status === 403) {
+          setModalTitle("Forbidden");
+          setModalMessage("You don't have access to view these products.");
+        } else if (status === 404) {
+          setModalTitle("Not Found");
+          setModalMessage("No products were found.");
+          setModalType("info");
+        } else if (status >= 500) {
+          setModalTitle("Server Error");
+          setModalMessage("Server is currently unavailable. Try again later.");
+        } else {
+          setModalTitle("Error Fetching");
+          setModalMessage(`Request failed with status ${status}.`);
+        }
+      } else {
+        setModalTitle("Network Error");
+        setModalMessage("Could not contact server. Check your network.");
+      }
+      setModalOpen(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -65,6 +99,8 @@ export default function HomePage({ searchQuery }: { searchQuery: string }) {
 
   return (
     <div className="bg-gray-900 min-h-screen p-8 text-gray-100">
+
+      <Modal open={modalOpen || loading} title={modalTitle} message={modalMessage} type={loading ? "loading" : modalType} onClose={() => setModalOpen(false)} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => (

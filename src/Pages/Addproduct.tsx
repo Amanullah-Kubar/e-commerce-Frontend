@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Upload } from "lucide-react";
 import axios from "axios";
+import Modal from "../components/Modal";
 
 interface Product {
   name: string;
@@ -41,6 +42,10 @@ function AddProduct() {
 
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"loading" | "error" | "success" | "info">("info");
+  const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
+  const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
 
 
 
@@ -67,9 +72,12 @@ function AddProduct() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+    setModalOpen(false);
     if(!product.name || !product.description || !product.category || !product.brand || product.price <= 0 || product.quantity < 0 || !product.releaseDate) {      
-      alert("❌ Please fill in all required fields correctly.");
+      setModalType("error");
+      setModalTitle("Validation Error");
+      setModalMessage("Please fill in all required fields correctly.");
+      setModalOpen(true);
       setLoading(false);
       return;
     }
@@ -84,17 +92,52 @@ function AddProduct() {
       // Append image separately as 'image' part
       if (imageFile) formData.append("imageFile", imageFile);
 
-      await axios.post("https://e-commerceapp-production-1342.up.railway.app/api/product", formData, {
-
+      const response = await axios.post("http://localhost:8080/api/product", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
 
-      alert("✅ Product added successfully!");
+      if (response && (response.status === 200 || response.status === 201)) {
+        setModalType("success");
+        setModalTitle("Product Added");
+        setModalMessage("Product added successfully!");
+        setModalOpen(true);
+      } else {
+        setModalType("info");
+        setModalTitle("Unexpected Response");
+        setModalMessage(`Server returned status ${response.status}.`);
+        setModalOpen(true);
+      }
     } catch (error: any) {
       console.error(error);
-      alert("❌ Error adding product. Please try again.");
+      const status = error?.response?.status;
+      if (status) {
+        if (status === 400) {
+          setModalTitle("Invalid Data");
+          setModalMessage("Provided product data is invalid. Please check the fields.");
+        } else if (status === 401) {
+          setModalTitle("Unauthorized");
+          setModalMessage("You must be logged in to add a product.");
+        } else if (status === 403) {
+          setModalTitle("Forbidden");
+          setModalMessage("You don't have permission to add products.");
+        } else if (status === 409) {
+          setModalTitle("Conflict");
+          setModalMessage("A product with similar data already exists.");
+        } else if (status >= 500) {
+          setModalTitle("Server Error");
+          setModalMessage("Server encountered an error. Try again later.");
+        } else {
+          setModalTitle("Error")
+          setModalMessage(`Request failed with status ${status}.`);
+        }
+      } else {
+        setModalTitle("Network Error");
+        setModalMessage("Unable to reach the server. Check your connection.");
+      }
+      setModalType("error");
+      setModalOpen(true);
     } finally {
       setLoading(false);
     }
@@ -106,6 +149,7 @@ function AddProduct() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center px-6 py-10">
+      <Modal open={modalOpen || loading} title={modalTitle} message={modalMessage} type={loading ? "loading" : modalType} onClose={() => setModalOpen(false)} />
       <form
         onSubmit={handleSubmit}
         className="bg-gray-800/70 backdrop-blur-md p-8 rounded-2xl shadow-2xl w-full max-w-3xl text-gray-100 space-y-6"
