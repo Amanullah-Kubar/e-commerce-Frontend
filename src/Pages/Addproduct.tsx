@@ -46,9 +46,47 @@ function AddProduct() {
   const [modalType, setModalType] = useState<"loading" | "error" | "success" | "info">("info");
   const [modalTitle, setModalTitle] = useState<string | undefined>(undefined);
   const [modalMessage, setModalMessage] = useState<string | undefined>(undefined);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
 
 
+
+  const validateField = (name: string, value: any) => {
+    const newErrors = { ...errors };
+    
+    switch (name) {
+      case 'name':
+        if (!value.trim()) newErrors.name = 'Product name is required';
+        else delete newErrors.name;
+        break;
+      case 'description':
+        if (!value.trim()) newErrors.description = 'Description is required';
+        else if (value.length < 10) newErrors.description = 'Description must be at least 10 characters';
+        else delete newErrors.description;
+        break;
+      case 'category':
+        if (!value) newErrors.category = 'Please select a category';
+        else delete newErrors.category;
+        break;
+      case 'brand':
+        if (!value.trim()) newErrors.brand = 'Brand name is required';
+        else delete newErrors.brand;
+        break;
+      case 'price':
+        if (value <= 0) newErrors.price = 'Price must be greater than 0';
+        else delete newErrors.price;
+        break;
+      case 'quantity':
+        if (value < 0) newErrors.quantity = 'Quantity cannot be negative';
+        else delete newErrors.quantity;
+        break;
+      case 'releaseDate':
+        if (!value) newErrors.releaseDate = 'Release date is required';
+        else delete newErrors.releaseDate;
+        break;
+    }
+    setErrors(newErrors);
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -59,6 +97,7 @@ function AddProduct() {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    validateField(name, type === "checkbox" ? checked : value);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,16 +110,27 @@ function AddProduct() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setModalOpen(false);
+    
+    // Validate all fields
     if(!product.name || !product.description || !product.category || !product.brand || product.price <= 0 || product.quantity < 0 || !product.releaseDate) {      
       setModalType("error");
       setModalTitle("Validation Error");
       setModalMessage("Please fill in all required fields correctly.");
       setModalOpen(true);
-      setLoading(false);
       return;
     }
+
+    // Check if there are any validation errors
+    if (Object.keys(errors).length > 0) {
+      setModalType("error");
+      setModalTitle("Form Errors");
+      setModalMessage("Please fix the errors below before submitting.");
+      setModalOpen(true);
+      return;
+    }
+
+    setLoading(true);
+    setModalOpen(false);
 
     try {
       const formData = new FormData();
@@ -193,9 +243,12 @@ function AddProduct() {
             value={product.name}
             onChange={handleChange}
             required
-            className="w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+            className={`w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 outline-none ${
+              errors.name ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+            }`}
             placeholder="Enter product name"
           />
+          {errors.name && <p className="text-red-400 text-sm mt-1">⚠️ {errors.name}</p>}
         </div>
 
         {/* Description */}
@@ -209,9 +262,12 @@ function AddProduct() {
             onChange={handleChange}
             required
             rows={3}
-            className="w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+            className={`w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 outline-none ${
+              errors.description ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+            }`}
             placeholder="Write product description..."
           />
+          {errors.description && <p className="text-red-400 text-sm mt-1">⚠️ {errors.description}</p>}
         </div>
 
         {/* Category & Brand */}
@@ -222,7 +278,9 @@ function AddProduct() {
               name="category"
               value={product.category}
               onChange={handleChange}
-              className="w-full p-2 rounded-lg bg-gray-700 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={`w-full p-2 rounded-lg bg-gray-700 mb-4 focus:outline-none focus:ring-2 ${
+                errors.category ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
               required
             >
               <option value="">Select category</option>
@@ -232,6 +290,7 @@ function AddProduct() {
                 </option>
               ))}
             </select>
+            {errors.category && <p className="text-red-400 text-sm mt-1">⚠️ {errors.category}</p>}
           </div>
           <div>
             <label className="block text-sm mb-2 font-semibold text-gray-300">
@@ -243,9 +302,12 @@ function AddProduct() {
               value={product.brand}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={`w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 outline-none ${
+                errors.brand ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
               placeholder="Enter brand name"
             />
+            {errors.brand && <p className="text-red-400 text-sm mt-1">⚠️ {errors.brand}</p>}
           </div>
         </div>
 
@@ -261,8 +323,11 @@ function AddProduct() {
               value={product.price}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={`w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 outline-none ${
+                errors.price ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
             />
+            {errors.price && <p className="text-red-400 text-sm mt-1">⚠️ {errors.price}</p>}
           </div>
           <div>
             <label className="block text-sm mb-2 font-semibold text-gray-300">
@@ -274,8 +339,11 @@ function AddProduct() {
               value={product.quantity}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={`w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 outline-none ${
+                errors.quantity ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
             />
+            {errors.quantity && <p className="text-red-400 text-sm mt-1">⚠️ {errors.quantity}</p>}
           </div>
         </div>
 
@@ -291,8 +359,11 @@ function AddProduct() {
               value={product.releaseDate}
               onChange={handleChange}
               required
-              className="w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500 outline-none"
+              className={`w-full p-3 rounded-lg bg-gray-700 text-gray-100 focus:ring-2 outline-none ${
+                errors.releaseDate ? 'ring-2 ring-red-500 focus:ring-red-500' : 'focus:ring-blue-500'
+              }`}
             />
+            {errors.releaseDate && <p className="text-red-400 text-sm mt-1">⚠️ {errors.releaseDate}</p>}
           </div>
           <div className="flex items-center mt-7">
             <input
